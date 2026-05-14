@@ -1,0 +1,44 @@
+version: 2.1
+
+jobs:
+  build:
+    working_directory: ~/project
+    docker:
+      - image: cimg/openjdk:11.0
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          keys:
+            - maven-cache-{{ checksum "pom.xml" }}
+
+      - run:
+          name: Build Maven project
+          command: mvn clean package -DskipTests
+
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: maven-cache-{{ checksum "pom.xml" }}
+
+      - setup_remote_docker
+
+      - run:
+          name: Build Docker Image
+          command: |
+            docker build \
+              -t my-image:${CIRCLE_SHA1} \
+              -t my-image:latest \
+              --build-arg JAR_FILE=target/*.jar \
+              .
+
+      - run:
+          name: Login Docker Hub
+          command: echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+      - run:
+          name: Push Image
+          command: |
+            docker push my-image:${CIRCLE_SHA1}
+            docker push my-image:latest
