@@ -2,17 +2,17 @@ version: '3.8'
 
 services:
   db:
-    image: postgres
+    image: postgres:15
     container_name: postgres-db
     environment:
       POSTGRES_USER: devops
       POSTGRES_PASSWORD: devops
       POSTGRES_DB: appdb
-    ports:
-      - "5555:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
   app:
-    build: .
+    image: muratilhan08/my-image:latest
     container_name: spring-app
     ports:
       - "8080:8080"
@@ -22,3 +22,6 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/appdb
       SPRING_DATASOURCE_USERNAME: devops
       SPRING_DATASOURCE_PASSWORD: devops
+
+volumes:
+  pgdata:
